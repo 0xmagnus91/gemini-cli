@@ -14,13 +14,21 @@ quickly.**
 "hooks": {
   "BeforeTool": [
     {
-      "type": "command",
-      "command": "node my-hook.js",
-      "name": "My Custom Hook"
+      "matcher": "read_file",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "node my-hook.js",
+          "name": "My Custom Hook"
+        }
+      ]
     }
   ]
 }
 ```
+
+- **matcher** (string, optional): A glob pattern to filter when the hooks run
+  (e.g., matching a tool name).
 
 ## Supported Events
 
@@ -60,9 +68,13 @@ Extensions provide hooks in `hooks/hooks.json` (not `gemini-extension.json`).
   "hooks": {
     "before_agent": [
       {
-        "type": "command",
-        "command": "node ${extensionPath}/scripts/setup.js",
-        "name": "Extension Setup"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${extensionPath}/scripts/setup.js",
+            "name": "Extension Setup"
+          }
+        ]
       }
     ]
   }
