@@ -42,6 +42,7 @@ import {
   isAutoExecutableCommand,
   isSlashCommand,
 } from '../utils/commandUtils.js';
+import { WARNING_PROMPT_DURATION_MS } from '../constants.js';
 import * as path from 'node:path';
 import { SCREEN_READER_USER_PREFIX } from '../textConstants.js';
 import { useShellFocusState } from '../contexts/ShellFocusContext.js';
@@ -525,7 +526,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           }
           escapeTimerRef.current = setTimeout(() => {
             resetEscapeState();
-          }, 500);
+          }, WARNING_PROMPT_DURATION_MS);
         } else {
           // Second ESC triggers rewind
           resetEscapeState();

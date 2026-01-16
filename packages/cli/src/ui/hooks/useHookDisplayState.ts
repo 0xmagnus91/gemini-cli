@@ -12,7 +12,7 @@ import {
   type HookEndPayload,
 } from '@google/gemini-cli-core';
 import { type ActiveHook } from '../types.js';
-import { WARNING_PROMPT_DURATION_MS } from '../constants.js';
+import { MINIMUM_HOOK_DISPLAY_DURATION_MS } from '../constants.js';
 
 export const useHookDisplayState = () => {
   const [activeHooks, setActiveHooks] = useState<ActiveHook[]>([]);
@@ -61,8 +61,10 @@ export const useHookDisplayState = () => {
 
       const now = Date.now();
       // Default to immediate removal if start time not found (defensive)
-      const elapsed = startTime ? now - startTime : WARNING_PROMPT_DURATION_MS;
-      const remaining = WARNING_PROMPT_DURATION_MS - elapsed;
+      const elapsed = startTime
+        ? now - startTime
+        : MINIMUM_HOOK_DISPLAY_DURATION_MS;
+      const remaining = MINIMUM_HOOK_DISPLAY_DURATION_MS - elapsed;
 
       const removeHook = () => {
         setActiveHooks((prev) => {
