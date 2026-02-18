@@ -951,6 +951,11 @@ their corresponding top-level category object in your `settings.json` file.
     (useful for remote sessions).
   - **Default:** `false`
 
+- **`experimental.useOSC52Copy`** (boolean):
+  - **Description:** Use OSC 52 sequence for copying instead of clipboardy
+    (useful for remote sessions).
+  - **Default:** `false`
+
 - **`experimental.plan`** (boolean):
   - **Description:** Enable planning features (Plan Mode and tools).
   - **Default:** `false`

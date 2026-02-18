@@ -1626,6 +1626,16 @@ const SETTINGS_SCHEMA = {
           'Use OSC 52 sequence for pasting instead of clipboardy (useful for remote sessions).',
         showInDialog: true,
       },
+      useOSC52Copy: {
+        type: 'boolean',
+        label: 'Use OSC 52 Copy',
+        category: 'Experimental',
+        requiresRestart: false,
+        default: false,
+        description:
+          'Use OSC 52 sequence for copying instead of clipboardy (useful for remote sessions).',
+        showInDialog: true,
+      },
       plan: {
         type: 'boolean',
         label: 'Plan',
