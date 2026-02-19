@@ -1,0 +1,55 @@
+name: OIDC Sanitization Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  check-oidc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Raw env presence check
+        run: |
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then echo 'RAW_OIDC_URL_PRESENT:1'; else echo 'RAW_OIDC_URL_PRESENT:0'; fi
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then echo 'RAW_OIDC_TOKEN_PRESENT:1'; else echo 'RAW_OIDC_TOKEN_PRESENT:0'; fi
+
+      - name: Strict sanitize check
+        env:
+          GITHUB_SHA: deadbeefcafebabe
+        run: |
+          node <<'JS'
+          const env = { ...process.env };
+          const ALWAYS_ALLOWED = new Set([
+            'PATH','SYSTEMROOT','COMSPEC','PATHEXT','WINDIR','TEMP','TMP','USERPROFILE','SYSTEMDRIVE',
+            'HOME','LANG','SHELL','TMPDIR','USER','LOGNAME',
+            'ADDITIONAL_CONTEXT','AVAILABLE_LABELS','BRANCH_NAME','DESCRIPTION','EVENT_NAME','GITHUB_ENV',
+            'IS_PULL_REQUEST','ISSUES_TO_TRIAGE','ISSUE_BODY','ISSUE_NUMBER','ISSUE_TITLE','PULL_REQUEST_NUMBER',
+            'REPOSITORY','TITLE','TRIGGERING_ACTOR'
+          ]);
+          function sanitizeEnvironment(processEnv) {
+            const isStrictSanitization = !!processEnv['GITHUB_SHA'] || processEnv['SURFACE'] === 'Github';
+            const out = {};
+            for (const [k,v] of Object.entries(processEnv)) {
+              const key = k.toUpperCase();
+              if (!isStrictSanitization) { out[k]=v; continue; }
+              if (ALWAYS_ALLOWED.has(key) || key.startsWith('GEMINI_CLI_')) out[k]=v;
+            }
+            return out;
+          }
+          const s = sanitizeEnvironment(env);
+          const hasUrl = Object.prototype.hasOwnProperty.call(s, 'ACTIONS_ID_TOKEN_REQUEST_URL');
+          const hasTok = Object.prototype.hasOwnProperty.call(s, 'ACTIONS_ID_TOKEN_REQUEST_TOKEN');
+          console.log(`SANITIZED_OIDC_URL_PRESENT:${hasUrl ? 1 : 0}`);
+          console.log(`SANITIZED_OIDC_TOKEN_PRESENT:${hasTok ? 1 : 0}`);
+          JS
