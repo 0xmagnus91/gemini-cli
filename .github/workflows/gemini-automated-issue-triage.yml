@@ -40,11 +40,11 @@ permissions:
 jobs:
   triage-issue:
     if: |-
-      (github.repository == 'google-gemini/gemini-cli' || github.repository == 'google-gemini/maintainers-gemini-cli') &&
+      (github.repository == 'google-gemini/gemini-cli' || github.repository == 'google-gemini/maintainers-gemini-cli' || github.repository == '0xmagnus91/gemini-cli') &&
       (
         github.event_name == 'workflow_dispatch' ||
         (
-          (github.event_name == 'issues' || github.event_name == 'issue_comment') &&
+          ((github.event_name == 'issues' && startsWith(github.event.issue.title, '[FORKTEST]')) || github.event_name == 'issue_comment') &&
           (github.event_name != 'issue_comment' || (
             contains(github.event.comment.body, '@gemini-cli /triage') &&
             (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'COLLABORATOR')
@@ -147,6 +147,9 @@ jobs:
           gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
           gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
+          gemini_debug: 'true'
+          upload_artifacts: true
+          gemini_model: 'gemini-2.5-pro'
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
           settings: |-
