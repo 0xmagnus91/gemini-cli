@@ -1,0 +1,73 @@
+name: MCP Override Proof
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prove-mcp-override:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify upstream merge-order lines
+        run: |
+          set -euo pipefail
+          rg -n "sanitizeEnvironment\(|mcpServerConfig\.env|\.\.\.sanitizeEnvironment\(|\.\.\.\(mcpServerConfig\.env \|\| \{\}\)" packages/core/src/tools/mcp-client.ts
+
+      - name: Deterministic sanitize->merge proof
+        env:
+          GEMINI_API_KEY: canary_base_track1
+          PATH: /usr/bin:/bin
+          HOME: /home/runner
+          GITHUB_SHA: deadbeefcafebabe
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const processEnv = { ...process.env };
+          const mcpServerConfig = { env: { GEMINI_API_KEY: 'canary_reintroduced_track1' } };
+
+          // Minimal strict-mode sanitizer equivalent to current behavior:
+          // strict mode in CI redacts all non-allowlisted keys.
+          const ALWAYS_ALLOWED = new Set([
+            'PATH','SYSTEMROOT','COMSPEC','PATHEXT','WINDIR','TEMP','TMP','USERPROFILE','SYSTEMDRIVE',
+            'HOME','LANG','SHELL','TMPDIR','USER','LOGNAME',
+            'ADDITIONAL_CONTEXT','AVAILABLE_LABELS','BRANCH_NAME','DESCRIPTION','EVENT_NAME','GITHUB_ENV',
+            'IS_PULL_REQUEST','ISSUES_TO_TRIAGE','ISSUE_BODY','ISSUE_NUMBER','ISSUE_TITLE','PULL_REQUEST_NUMBER',
+            'REPOSITORY','TITLE','TRIGGERING_ACTOR'
+          ]);
+
+          function sanitizeEnvironment(env, config) {
+            const isStrictSanitization = !!env['GITHUB_SHA'] || env['SURFACE'] === 'Github';
+            if (!config.enableEnvironmentVariableRedaction && !isStrictSanitization) return { ...env };
+            const out = {};
+            for (const [k, v] of Object.entries(env)) {
+              const key = k.toUpperCase();
+              if (ALWAYS_ALLOWED.has(key) || key.startsWith('GEMINI_CLI_')) out[k] = v;
+            }
+            return out;
+          }
+
+          const sanitizationConfig = {
+            allowedEnvironmentVariables: [],
+            blockedEnvironmentVariables: [],
+            enableEnvironmentVariableRedaction: false,
+          };
+
+          const sanitized = sanitizeEnvironment(processEnv, sanitizationConfig);
+          const effective = {
+            ...sanitized,
+            ...(mcpServerConfig.env || {}),
+          };
+
+          const sanitizedHas = Object.prototype.hasOwnProperty.call(sanitized, 'GEMINI_API_KEY');
+          const effectiveHas = Object.prototype.hasOwnProperty.call(effective, 'GEMINI_API_KEY');
+          const effectiveVal = effective['GEMINI_API_KEY'] || '';
+
+          console.log(`SANITIZED_HAS_KEY:${sanitizedHas ? 1 : 0}`);
+          console.log(`MCP_EFFECTIVE_HAS_KEY:${effectiveHas ? 1 : 0}`);
+          console.log(`MCP_EFFECTIVE_VALUE:${effectiveVal}`);
+
+          if (sanitizedHas) process.exitCode = 2;
+          if (!effectiveHas || effectiveVal !== 'canary_reintroduced_track1') process.exitCode = 3;
+          JS
