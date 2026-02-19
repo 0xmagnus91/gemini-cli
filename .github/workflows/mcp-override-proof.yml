@@ -13,11 +13,9 @@ jobs:
       - name: Verify upstream merge-order lines
         run: |
           set -euo pipefail
-          if command -v rg >/dev/null 2>&1; then
-            rg -n "sanitizeEnvironment\(|mcpServerConfig\.env|\.\.\.sanitizeEnvironment\(|\.\.\.\(mcpServerConfig\.env \|\| \{\}\)" packages/core/src/tools/mcp-client.ts
-          else
-            grep -nE "sanitizeEnvironment\(|mcpServerConfig\.env|\.\.\.sanitizeEnvironment\(|\.\.\.\(mcpServerConfig\.env \|\| \{\}\)" packages/core/src/tools/mcp-client.ts
-          fi|mcpServerConfig\.env|\.\.\.sanitizeEnvironment\(|\.\.\.\(mcpServerConfig\.env \|\| \{\}\)" packages/core/src/tools/mcp-client.ts
+          echo "-- mcp-client merge lines --"
+          grep -n "sanitizeEnvironment(process.env, sanitizationConfig)" packages/core/src/tools/mcp-client.ts
+          grep -n "...(mcpServerConfig.env || {})" packages/core/src/tools/mcp-client.ts
 
       - name: Deterministic sanitize->merge proof
         env:
@@ -31,8 +29,7 @@ jobs:
           const processEnv = { ...process.env };
           const mcpServerConfig = { env: { GEMINI_API_KEY: 'canary_reintroduced_track1' } };
 
-          // Minimal strict-mode sanitizer equivalent to current behavior:
-          // strict mode in CI redacts all non-allowlisted keys.
+          // Minimal strict-mode sanitizer equivalent to current behavior.
           const ALWAYS_ALLOWED = new Set([
             'PATH','SYSTEMROOT','COMSPEC','PATHEXT','WINDIR','TEMP','TMP','USERPROFILE','SYSTEMDRIVE',
             'HOME','LANG','SHELL','TMPDIR','USER','LOGNAME',
