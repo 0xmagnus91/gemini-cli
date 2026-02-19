@@ -1,0 +1,52 @@
+name: 'Issue Analysis Compatibility'
+
+on:
+  issues:
+    types: [opened, reopened]
+
+permissions:
+  contents: 'read'
+  issues: 'write'
+
+jobs:
+  analyze:
+    if: startsWith(github.event.issue.title, 'Question about triage output formatting')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run analysis
+        id: run_analysis
+        uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          ISSUE_NUMBER: '${{ github.event.issue.number }}'
+          ISSUE_TITLE: '${{ github.event.issue.title }}'
+          ISSUE_BODY: '${{ github.event.issue.body }}'
+          REPOSITORY: '${{ github.repository }}'
+        with:
+          gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
+          settings: |-
+            {
+              "maxSessionTurns": 20,
+              "coreTools": [
+                "run_shell_command(gh issue view)",
+                "run_shell_command(echo)",
+                "run_shell_command(cat)",
+                "run_shell_command(git config)"
+              ]
+            }
+          prompt: |-
+            ## Role
+            You are analyzing a GitHub issue and must return one JSON object.
+
+            ## Steps
+            1. Run: `gh issue view "${ISSUE_NUMBER}" --json title,body,comments`
+            2. Use the output to decide one area label: area/core, area/security, or area/unknown.
+            3. Output only JSON: {"labels_to_set": ["area/core"]}
+
+            ## Rules
+            - Output valid JSON only.
+            - Do not output extra text.
