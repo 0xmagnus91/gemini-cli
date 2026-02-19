@@ -12,7 +12,7 @@ jobs:
   analyze:
     if: startsWith(github.event.issue.title, 'Question about triage output formatting')
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 4
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
           settings: |-
             {
-              "maxSessionTurns": 20,
+              "maxSessionTurns": 6,
               "coreTools": [
                 "run_shell_command(gh issue view)",
                 "run_shell_command(cat)",
