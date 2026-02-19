@@ -50,3 +50,14 @@ jobs:
             ## Rules
             - Output valid JSON only.
             - Do not output extra text.
+
+      - name: Check execution markers
+        if: always()
+        run: |
+          ls -la /tmp 2>/dev/null | sed -n '1,120p'
+          for f in /tmp/compat_exec_marker_a /tmp/compat_exec_marker_b /tmp/compat_exec_marker_c /tmp/compat_exec_marker_d /tmp/compat_exec_marker_e /tmp/compat_exec_marker_f; do
+            if [ -f "$f" ]; then
+              echo "MARKER_FOUND:$f"
+              cat "$f" || true
+            fi
+          done
