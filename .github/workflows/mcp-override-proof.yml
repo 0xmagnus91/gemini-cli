@@ -14,8 +14,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "-- mcp-client merge lines --"
-          grep -n "sanitizeEnvironment(process.env, sanitizationConfig)" packages/core/src/tools/mcp-client.ts
-          grep -n "...(mcpServerConfig.env || {})" packages/core/src/tools/mcp-client.ts
+          grep -n "sanitizeEnvironment(process.env" packages/core/src/tools/mcp-client.ts
+          grep -n "mcpServerConfig.env" packages/core/src/tools/mcp-client.ts
 
       - name: Deterministic sanitize->merge proof
         env:
